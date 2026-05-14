@@ -1,0 +1,58 @@
+name: AI 자동매매 봇
+
+on:
+  schedule:
+    - cron: '30 0 * * 1-5'
+    - cron: '0 4 * * 1-5'
+    - cron: '0 6 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: .env 생성
+        run: |
+          cat << EOF > .env
+          KIS_APP_KEY=${{ secrets.KIS_APP_KEY }}
+          KIS_APP_SECRET=${{ secrets.KIS_APP_SECRET }}
+          KIS_ACCOUNT_NO=${{ secrets.KIS_ACCOUNT_NO }}
+          KIS_IS_MOCK=${{ secrets.KIS_IS_MOCK }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL=gpt-4o-mini
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          MAX_BUDGET_PER_STOCK=10000
+          BUY_CONFIDENCE_MIN=55
+          SELL_CONFIDENCE_MIN=60
+          TAKE_PROFIT_RATE=0.02
+          STOP_LOSS_RATE=-0.10
+          COOLDOWN_DAYS=3
+          USE_VOLUME_TOP10=false
+          EOF
+
+      - name: 자동매매 실행
+        run: python main.py --now
+
+      - name: 데이터 저장
+        if: always()
+        run: |
+          git config user.name "AutoTrader Bot"
+          git config user.email "bot@autotrader.local"
+          mkdir -p data
+          git add data/ -f
+          git diff --staged --quiet || git commit -m "📊 매매 데이터 업데이트"
+          git push
