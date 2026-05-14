@@ -7,6 +7,10 @@ on:
     - cron: '0 6 * * 1-5'
   workflow_dispatch:
 
+defaults:
+  run:
+    working-directory: autotrader_v2
+
 jobs:
   trade:
     runs-on: ubuntu-latest
@@ -50,9 +54,10 @@ jobs:
       - name: 데이터 저장
         if: always()
         run: |
+          cd ${{ github.workspace }}
           git config user.name "AutoTrader Bot"
           git config user.email "bot@autotrader.local"
-          mkdir -p data
-          git add data/ -f
+          mkdir -p autotrader_v2/data
+          git add autotrader_v2/data/ -f
           git diff --staged --quiet || git commit -m "📊 매매 데이터 업데이트"
           git push
