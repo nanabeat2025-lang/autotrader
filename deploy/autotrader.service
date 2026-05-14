@@ -1,0 +1,15 @@
+[Unit]
+Description=AI 자동매매 봇
+After=network.target
+
+[Service]
+Type=simple
+User=USER_NAME
+WorkingDirectory=/home/USER_NAME/autotrader
+ExecStart=/home/USER_NAME/autotrader/venv/bin/python main.py
+Restart=always
+RestartSec=30
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
