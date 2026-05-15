@@ -1,0 +1,50 @@
+name: 텔레그램 명령어 처리
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  telegram:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install requests python-dotenv openai
+
+      - name: .env 생성
+        run: |
+          cat << EOF > .env
+          KIS_APP_KEY=${{ secrets.KIS_APP_KEY }}
+          KIS_APP_SECRET=${{ secrets.KIS_APP_SECRET }}
+          KIS_ACCOUNT_NO=${{ secrets.KIS_ACCOUNT_NO }}
+          KIS_IS_MOCK=${{ secrets.KIS_IS_MOCK }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL=gpt-4o-mini
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          MAX_BUDGET_PER_STOCK=10000
+          EOF
+
+      - name: 명령어 처리
+        run: python telegram_handler.py
+
+      - name: 데이터 저장
+        if: always()
+        run: |
+          git config user.name "AutoTrader Bot"
+          git config user.email "bot@autotrader.local"
+          mkdir -p data
+          git add data/ -f
+          git diff --staged --quiet || git commit -m "💬 텔레그램 명령어 처리"
+          git push
