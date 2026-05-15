@@ -29,16 +29,19 @@ ETF_SYSTEM_PROMPT = """당신은 국내 ETF 중장기 투자 전문 애널리스
 ETF는 개별 종목보다 변동성이 낮고 지수를 추종합니다.
 보수적이고 안정적인 관점에서 분석하세요.
 
-분석 프레임워크 (4단계로 순서대로 판단):
+분석 프레임워크 (4단계):
 1. 시장 분위기 — 코스피/코스닥 흐름이 ETF에 우호적인가?
 2. 수급 — 외국인/기관이 지속적으로 매수하고 있는가?
-3. 기술적 위치 — RSI, 이평선 기준으로 현재 구간은?
+3. 기술적 위치 — RSI, MACD, 볼린저밴드, 이평선 종합 분석
 4. 종합 판단 — 지금 포지션을 취하거나 유지하는 게 합리적인가?
 
 판단 기준:
-- ETF는 RSI 40 이하 과매도 구간에서 분할매수 긍정적
-- RSI 75 이상 과열 구간에서는 보수적으로 접근
-- 인버스 ETF는 시장 하락 시 매수, 상승 시 매도 신호
+- RSI 40 이하 + 볼린저밴드 하단 근처: 강한 매수 신호
+- RSI 75 이상 + 볼린저밴드 상단 돌파: 보수적 접근 또는 매도
+- MACD 골든크로스: 추세 전환 매수 신호
+- MACD 데드크로스: 추세 전환 매도 신호
+- 거래량 급증 + 가격 상승: 강한 상승 신호
+- 볼린저밴드 위치 0.2 이하: 매수 관심, 0.8 이상: 매도 관심
 - 신뢰도 55 미만이면 반드시 HOLD
 """ + RESPONSE_FORMAT
 
@@ -46,17 +49,20 @@ ETF는 개별 종목보다 변동성이 낮고 지수를 추종합니다.
 STOCK_SYSTEM_PROMPT = """당신은 국내 개별 주식 분석 전문 퀀트 애널리스트입니다.
 기술적 지표와 수급 데이터를 종합하여 중단기 관점에서 판단합니다.
 
-분석 프레임워크 (4단계로 순서대로 판단):
+분석 프레임워크 (4단계):
 1. 시장 분위기 — 코스피/코스닥 흐름이 섹터에 우호적인가?
-2. 수급 — 외국인/기관 순매수가 지속되는가? 개인 역매수인가?
-3. 기술적 위치 — RSI, 5일/20일 이평선 배열과 거래량 확인
+2. 수급 — 외국인/기관 순매수가 지속되는가?
+3. 기술적 위치 — RSI, MACD, 볼린저밴드, 이평선, 거래량 종합 분석
 4. 종합 판단 — 현재 리스크 대비 기대수익이 충분한가?
 
 판단 기준:
-- RSI 30 이하: 과매도 → 반등 가능성 검토
-- RSI 70 이상: 과매수 → 매도 or 관망
-- 5일선 > 20일선: 단기 상승 추세
-- 외국인+기관 동반 순매수: 강한 긍정 신호
+- RSI 30 이하 + MACD 골든크로스: 강한 매수 신호
+- RSI 70 이상 + MACD 데드크로스: 강한 매도 신호
+- 볼린저밴드 하단 이탈 후 반등: 매수 기회
+- 볼린저밴드 상단 돌파 후 하락 전환: 매도 기회
+- 거래량 급증(3배+) + 양봉: 세력 매집 가능성
+- 외국인+기관 동반 순매수 + MACD 양전환: 최강 매수 시그널
+- 변동성이 높을수록 보수적으로 판단 (신뢰도 낮게)
 - 신뢰도 55 미만이면 반드시 HOLD
 """ + RESPONSE_FORMAT
 
@@ -68,6 +74,11 @@ def _build_user_message(ticker: str, name: str, stock_type: str,
         f"저가{d['low']:,.0f} 종가{d['close']:,.0f} 거래량{d['volume']:,}"
         for d in indicators.get("recent_ohlcv", [])[-5:]
     )
+
+    macd = indicators.get("macd", {})
+    bb = indicators.get("bollinger", {})
+    vol_spike = indicators.get("volume_spike", {})
+
     return f"""
 [종목] {name} ({ticker}) / 유형: {stock_type}
 
@@ -76,7 +87,13 @@ def _build_user_message(ticker: str, name: str, stock_type: str,
   RSI(14): {indicators.get('rsi', 'N/A')}
   5일 이동평균: {indicators.get('ma5', 0):,.0f}원
   20일 이동평균: {indicators.get('ma20', 0):,.0f}원
+  MACD: {macd.get('macd', 'N/A')} / Signal: {macd.get('signal', 'N/A')} / Histogram: {macd.get('histogram', 'N/A')} / 크로스: {macd.get('cross', '없음')}
+  볼린저밴드: 상단 {bb.get('upper', 'N/A')}원 / 중간 {bb.get('middle', 'N/A')}원 / 하단 {bb.get('lower', 'N/A')}원 / 위치: {bb.get('position', 'N/A')} (0=하단, 1=상단)
+  변동성(연율화): {indicators.get('volatility', 'N/A')}%
+
+[거래량]
   5일 평균거래량: {indicators.get('avg_volume_5d', 0):,.0f}주
+  거래량 급증: {'⚠️ 급증! (평균 대비 {0}배)'.format(vol_spike.get('ratio', 0)) if vol_spike.get('is_spike') else '정상'}
 
 [최근 5일 OHLCV]
 {ohlcv_summary}
