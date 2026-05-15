@@ -39,17 +39,17 @@ WATCHLIST = {
 USE_VOLUME_TOP10 = False
 
 # ── 매매 기준 ─────────────────────────────────────────────
-MAX_BUDGET_PER_STOCK = int(os.getenv("MAX_BUDGET_PER_STOCK", "20000"))
+MAX_BUDGET_PER_STOCK = int(os.getenv("MAX_BUDGET_PER_STOCK", "30000"))   # 3만원
 BUY_CONFIDENCE_MIN   = int(os.getenv("BUY_CONFIDENCE_MIN",  "55"))
 SELL_CONFIDENCE_MIN  = int(os.getenv("SELL_CONFIDENCE_MIN", "60"))
-TAKE_PROFIT_RATE     = float(os.getenv("TAKE_PROFIT_RATE",  "0.02"))   # +2% 익절
-STOP_LOSS_RATE       = float(os.getenv("STOP_LOSS_RATE",   "-0.10"))   # -10% 손절
+TAKE_PROFIT_RATE     = float(os.getenv("TAKE_PROFIT_RATE",  "0.015"))    # +1.5% 익절
+STOP_LOSS_RATE       = float(os.getenv("STOP_LOSS_RATE",   "-0.10"))     # -10% 손절
 
-# ── 리스크 관리 (v3 신규) ────────────────────────────────
-MAX_HOLDINGS         = int(os.getenv("MAX_HOLDINGS", "5"))              # 최대 동시 보유 종목 수
-TRAILING_STOP_RATE   = float(os.getenv("TRAILING_STOP_RATE", "0.05"))  # 트레일링 스탑 5%
-SPLIT_BUY_COUNT      = int(os.getenv("SPLIT_BUY_COUNT", "2"))          # 분할매수 횟수 (2=50%씩)
-VOLATILITY_ADJUST    = os.getenv("VOLATILITY_ADJUST", "true").lower() == "true"  # 변동성 포지션 조절
+# ── 리스크 관리 ────────────────────────────────────────────
+MAX_HOLDINGS         = int(os.getenv("MAX_HOLDINGS", "5"))
+TRAILING_STOP_RATE   = float(os.getenv("TRAILING_STOP_RATE", "0.05"))
+SPLIT_BUY_COUNT      = int(os.getenv("SPLIT_BUY_COUNT", "1"))            # 1회 (전량 매수)
+VOLATILITY_ADJUST    = os.getenv("VOLATILITY_ADJUST", "true").lower() == "true"
 
 # 섹터 분류 (같은 섹터 최대 2종목까지)
 MAX_PER_SECTOR       = int(os.getenv("MAX_PER_SECTOR", "2"))
