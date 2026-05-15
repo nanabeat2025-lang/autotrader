@@ -2,9 +2,7 @@ name: AI 자동매매 봇
 
 on:
   schedule:
-    - cron: '30 0 * * 1-5'
-    - cron: '0 4 * * 1-5'
-    - cron: '0 6 * * 1-5'
+  - cron: '30 0-6 * * 1-5'    # 09:30~15:30 KST 매시간
   workflow_dispatch:
 
 jobs:
