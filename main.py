@@ -59,53 +59,35 @@ def run_cycle(kis: KISApi, dry_run: bool = False):
         print(f"시장 지수 조회 실패: {e}")
         market = {}
 
-    # ── 분석 대상 종목 구성 ──────────────────────────────
-    tickers = list(WATCHLIST.items())  # [(ticker, info_dict), ...]
+    # ── 스크리너로 분석 대상 종목 선정 ─────────────────────
+    from core.screener import screen_stocks
+    from core.trader import load_positions
+    held_tickers = list(load_positions().keys())
+    candidates = screen_stocks(kis, held_tickers=held_tickers)
 
-    if USE_VOLUME_TOP10:
-        try:
-            for item in kis.get_volume_top10():
-                t = item.get("mksc_shrn_iscd", "")
-                n = item.get("hts_kor_isnm", t)
-                if t and t not in dict(tickers):
-                    tickers.append((t, {"name": n, "type": "STOCK"}))
-        except Exception as e:
-            print(f"거래량 TOP10 조회 실패: {e}")
+    if not candidates:
+        print("📭 조건 충족 종목 없음 — 다음 사이클에서 재시도")
+        return
 
+    print(f"\n📋 분석 대상: {len(candidates)}개 종목")
     summary_results = []
 
-    for ticker, info in tickers:
-        # info가 dict인지 문자열인지 안전하게 처리
-        if isinstance(info, dict):
-            name       = info.get("name", ticker)
-            stock_type = info.get("type", "STOCK")
-        else:
-            name       = info
-            stock_type = "STOCK"
+    for item in candidates:
+        ticker        = item["ticker"]
+        name          = item["name"]
+        stock_type    = item["type"]
+        indicators    = item["indicators"]
+        screen_reason = item["screen_reason"]
 
-        print(f"\n[{ticker}] {name} ({stock_type}) 분석 중...")
+        print(f"\n[{ticker}] {name} ({stock_type}) — {screen_reason}")
 
         try:
-            price_data   = kis.get_stock_price(ticker)
-            ohlcv        = kis.get_daily_ohlcv(ticker, 20)
             investor_raw = kis.get_investor_trend(ticker)
-
-            print(f"  📦 OHLCV 데이터: {len(ohlcv)}일치 수신")
-            if not ohlcv:
-                print(f"  ⚠️ OHLCV 데이터가 비어있음 — 현재가만으로 분석 진행")
-
-            indicators = build_indicators(ohlcv)
-            raw_price = price_data.get("stck_prpr", "") or indicators["current_price"]
-            try:
-                indicators["current_price"] = float(raw_price)
-            except (ValueError, TypeError):
-                pass
-            investor = summarize_investor(investor_raw)
+            investor     = summarize_investor(investor_raw)
 
             print(f"  현재가: {indicators['current_price']:,.0f}원 | "
                   f"RSI: {indicators['rsi']} | "
-                  f"MA5: {indicators.get('ma5', 0):,.0f} | "
-                  f"MA20: {indicators.get('ma20', 0):,.0f}")
+                  f"MACD: {indicators.get('macd', {}).get('histogram', 'N/A')}")
 
             # OpenAI GPT 분석
             ai_result = analyze_stock(
