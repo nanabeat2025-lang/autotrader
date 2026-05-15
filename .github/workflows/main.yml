@@ -4,7 +4,7 @@ on:
   schedule:
   - cron: '30 0-6 * * 1-5'    # 09:30~15:30 KST 매시간
   workflow_dispatch:
-repository_dispatch:
+  repository_dispatch:
     types: [cron-trigger]
 jobs:
   trade:
