@@ -4,7 +4,9 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
-
+  repository_dispatch:
+    types: [telegram-trigger]
+    
 jobs:
   telegram:
     runs-on: ubuntu-latest
