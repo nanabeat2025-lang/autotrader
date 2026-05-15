@@ -45,9 +45,22 @@ SELL_CONFIDENCE_MIN  = int(os.getenv("SELL_CONFIDENCE_MIN", "60"))
 TAKE_PROFIT_RATE     = float(os.getenv("TAKE_PROFIT_RATE",  "0.02"))   # +2% 익절
 STOP_LOSS_RATE       = float(os.getenv("STOP_LOSS_RATE",   "-0.10"))   # -10% 손절
 
+# ── 리스크 관리 (v3 신규) ────────────────────────────────
+MAX_HOLDINGS         = int(os.getenv("MAX_HOLDINGS", "5"))              # 최대 동시 보유 종목 수
+TRAILING_STOP_RATE   = float(os.getenv("TRAILING_STOP_RATE", "0.05"))  # 트레일링 스탑 5%
+SPLIT_BUY_COUNT      = int(os.getenv("SPLIT_BUY_COUNT", "2"))          # 분할매수 횟수 (2=50%씩)
+VOLATILITY_ADJUST    = os.getenv("VOLATILITY_ADJUST", "true").lower() == "true"  # 변동성 포지션 조절
+
+# 섹터 분류 (같은 섹터 최대 2종목까지)
+MAX_PER_SECTOR       = int(os.getenv("MAX_PER_SECTOR", "2"))
+STOCK_SECTORS = {
+    "005930": "반도체", "000660": "반도체",
+    "035420": "IT", "035720": "IT",
+    "069500": "지수ETF", "091160": "반도체ETF", "102780": "그룹ETF",
+}
+
 # ── 쿨다운 (재매수 금지 기간) ────────────────────────────
-# 손절/AI매도로 판 종목만 적용, 익절은 쿨다운 없음
 COOLDOWN_DAYS = int(os.getenv("COOLDOWN_DAYS", "3"))
 
-# ── 스케줄 (블로그 v2: 하루 3회, 비용 절감) ─────────────
+# ── 스케줄 (하루 3회) ─────────────────────────────────────
 SCHEDULE_TIMES = ["09:30", "13:00", "15:00"]
