@@ -112,6 +112,10 @@ class KISApi:
         return result
 
     def get_volume_top10(self) -> list[dict]:
+        return self.get_volume_top(10)
+
+    def get_volume_top(self, n: int = 100) -> list[dict]:
+        """거래량 상위 N 종목"""
         url = f"{self.base_url}/uapi/domestic-stock/v1/ranking/volume"
         params = {
             "fid_cond_mrkt_div_code": "J", "fid_cond_scr_div_code": "20171",
@@ -123,7 +127,27 @@ class KISApi:
         }
         resp = requests.get(url, headers=self._headers("FHPST01710000"), params=params)
         resp.raise_for_status()
-        return resp.json().get("output", [])[:10]
+        return resp.json().get("output", [])[:n]
+
+    def get_market_cap_top(self, market: str = "J", n: int = 100) -> list[dict]:
+        """시가총액 상위 N 종목 (J=KOSPI, Q=KOSDAQ)"""
+        url = f"{self.base_url}/uapi/domestic-stock/v1/ranking/market-cap"
+        params = {
+            "fid_cond_mrkt_div_code": market,
+            "fid_cond_scr_div_code": "20174",
+            "fid_input_iscd": "0000", "fid_div_cls_code": "0",
+            "fid_blng_cls_code": "0", "fid_trgt_cls_code": "111111111",
+            "fid_trgt_exls_cls_code": "0000000000",
+            "fid_input_price_1": "", "fid_input_price_2": "",
+            "fid_vol_cnt": "", "fid_input_date_1": "",
+        }
+        try:
+            resp = requests.get(url, headers=self._headers("FHPST01740000"), params=params)
+            resp.raise_for_status()
+            return resp.json().get("output", [])[:n]
+        except Exception as e:
+            print(f"시가총액 조회 실패({market}): {e}")
+            return []
 
     # ── 계좌 / 잔고 ───────────────────────────────────────
     def get_balance(self) -> dict:
