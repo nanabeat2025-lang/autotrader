@@ -116,7 +116,7 @@ class KISApi:
 
     def get_volume_top(self, n: int = 100) -> list[dict]:
         """거래량 상위 N 종목"""
-        url = f"{self.base_url}/uapi/domestic-stock/v1/ranking/volume"
+        url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/volume-rank"
         params = {
             "fid_cond_mrkt_div_code": "J", "fid_cond_scr_div_code": "20171",
             "fid_input_iscd": "0000", "fid_div_cls_code": "0",
