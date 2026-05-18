@@ -1,0 +1,36 @@
+[
+  {
+    "id": "229200_20260518013445",
+    "ticker": "229200",
+    "name": "KODEX 코스닥150",
+    "buy_date": "2026-05-18 01:34:45",
+    "buy_price": 18430.0,
+    "ai_signal": "BUY",
+    "ai_confidence": 70,
+    "ai_target": 19500,
+    "ai_stop_loss": 18000,
+    "ai_reason": "RSI가 40.2로 낮고 볼린저밴드 하단 근처에 위치하여 강한 매수 신호를 나타냅니다. 외국인과 기관의 순매수가 지속되고 있어 긍정적인 수급 상황입니다.",
+    "sell_date": null,
+    "sell_price": null,
+    "actual_pnl_rate": null,
+    "target_reached": null,
+    "result": "OPEN"
+  },
+  {
+    "id": "305540_20260518013459",
+    "ticker": "305540",
+    "name": "TIGER 2차전지테마",
+    "buy_date": "2026-05-18 01:34:59",
+    "buy_price": 23665.0,
+    "ai_signal": "BUY",
+    "ai_confidence": 65,
+    "ai_target": 25000,
+    "ai_stop_loss": 22000,
+    "ai_reason": "RSI가 44.58로 40 이하가 아니지만, 볼린저밴드 위치가 0.093으로 하단 근처에 있어 매수 관심이 높습니다. 외국인과 기관의 순매수가 지속되고 있어 긍정적인 수급 상황입니다.",
+    "sell_date": null,
+    "sell_price": null,
+    "actual_pnl_rate": null,
+    "target_reached": null,
+    "result": "OPEN"
+  }
+]
