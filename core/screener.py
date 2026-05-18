@@ -18,9 +18,20 @@ import time
 from core.indicators import build_indicators, calc_rsi, calc_macd, calc_bollinger, detect_volume_spike, _safe_float, _safe_int
 
 
+def _is_etf(name: str) -> bool:
+    """ETF 종목명 필터링 (브랜드 prefix로 판별)"""
+    etf_brands = [
+        "KODEX", "TIGER", "KBSTAR", "ARIRANG", "HANARO", "WOORI",
+        "MASTER", "ACE", "KOACT", "PLUS", "RISE", "TIMEFOLIO",
+        "BNK", "SOL", "SSO", "QV", "ZIG", "ETN", "ETF",
+    ]
+    name_upper = name.upper()
+    return any(brand in name_upper for brand in etf_brands)
+
+
 def build_universe(kis) -> dict:
     """
-    동적 스캔 유니버스 구성
+    동적 스캔 유니버스 구성 (ETF 제외 - 개별 종목만)
     - KOSPI 시가총액 상위 100
     - KOSDAQ 시가총액 상위 100
     - 거래량 상위 100
@@ -28,7 +39,7 @@ def build_universe(kis) -> dict:
     """
     universe = {}
 
-    print("🌐 전 종목 유니버스 구성 중...")
+    print("🌐 전 종목 유니버스 구성 중 (ETF 제외)...")
 
     # 1) KOSPI 시가총액 상위 100
     try:
@@ -36,9 +47,9 @@ def build_universe(kis) -> dict:
         for item in kospi_top:
             ticker = item.get("mksc_shrn_iscd", "")
             name   = item.get("hts_kor_isnm", ticker)
-            if ticker and len(ticker) == 6:
+            if ticker and len(ticker) == 6 and not _is_etf(name):
                 universe[ticker] = {"name": name, "type": "STOCK"}
-        print(f"  KOSPI 시가총액 상위: {len(kospi_top)}개")
+        print(f"  KOSPI 시가총액 상위: {len(kospi_top)}개 → 필터 후 {sum(1 for t in universe)}개")
     except Exception as e:
         print(f"  KOSPI 시가총액 조회 실패: {e}")
 
@@ -48,34 +59,29 @@ def build_universe(kis) -> dict:
         for item in kosdaq_top:
             ticker = item.get("mksc_shrn_iscd", "")
             name   = item.get("hts_kor_isnm", ticker)
-            if ticker and len(ticker) == 6:
+            if ticker and len(ticker) == 6 and not _is_etf(name):
                 universe[ticker] = {"name": name, "type": "STOCK"}
         print(f"  KOSDAQ 시가총액 상위: {len(kosdaq_top)}개")
     except Exception as e:
         print(f"  KOSDAQ 시가총액 조회 실패: {e}")
 
-    # 3) 거래량 상위 100 (당일 핫한 종목)
+    # 3) 거래량 상위 100 (ETF 자동 제외)
     try:
         vol_top = kis.get_volume_top(n=100)
+        etf_skipped = 0
         for item in vol_top:
             ticker = item.get("mksc_shrn_iscd", "")
             name   = item.get("hts_kor_isnm", ticker)
             if ticker and len(ticker) == 6:
+                if _is_etf(name):
+                    etf_skipped += 1
+                    continue
                 universe[ticker] = {"name": name, "type": "STOCK"}
-        print(f"  거래량 상위: {len(vol_top)}개")
+        print(f"  거래량 상위: {len(vol_top)}개 (ETF {etf_skipped}개 제외)")
     except Exception as e:
         print(f"  거래량 상위 조회 실패: {e}")
 
-    # ETF도 추가 (주요 지수 ETF)
-    etf_list = {
-        "069500": "KODEX 200", "091160": "KODEX 반도체",
-        "102780": "KODEX 삼성그룹", "229200": "KODEX 코스닥150",
-        "139260": "TIGER 200 IT", "305540": "TIGER 2차전지테마",
-    }
-    for ticker, name in etf_list.items():
-        universe[ticker] = {"name": name, "type": "ETF"}
-
-    print(f"✅ 유니버스 구성 완료: 총 {len(universe)}개 종목\n")
+    print(f"✅ 유니버스 구성 완료: 총 {len(universe)}개 개별 종목\n")
     return universe
 
 
