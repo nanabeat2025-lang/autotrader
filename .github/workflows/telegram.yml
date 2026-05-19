@@ -2,11 +2,9 @@ name: 텔레그램 명령어 처리
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/5 * * * *'  # 5분마다 실행
   workflow_dispatch:
-  repository_dispatch:
-    types: [telegram-trigger]
-    
+
 jobs:
   telegram:
     runs-on: ubuntu-latest
@@ -22,7 +20,7 @@ jobs:
           python-version: '3.11'
 
       - name: 패키지 설치
-        run: pip install requests python-dotenv openai
+        run: pip install requests python-dotenv openai holidays
 
       - name: .env 생성
         run: |
