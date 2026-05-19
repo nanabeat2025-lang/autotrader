@@ -208,10 +208,46 @@ def handle_command(command: str, args: list, kis) -> str:
     return "❓ 알 수 없는 명령어입니다. /help 를 입력해보세요."
 
 
+def is_korean_holiday() -> bool:
+    """한국 공휴일 + 주말 확인"""
+    from datetime import date
+    today = date.today()
+    # 주말
+    if today.weekday() >= 5:
+        return True
+    # 한국 공휴일
+    try:
+        import holidays
+        kr_holidays = holidays.SouthKorea()
+        if today in kr_holidays:
+            return True
+    except ImportError:
+        # holidays 라이브러리 없으면 주요 공휴일 하드코딩 체크
+        major_holidays_2026 = {
+            (1, 1),    # 신정
+            (3, 1),    # 삼일절
+            (5, 5),    # 어린이날
+            (6, 6),    # 현충일
+            (8, 15),   # 광복절
+            (10, 3),   # 개천절
+            (10, 9),   # 한글날
+            (12, 25),  # 크리스마스
+            # 음력 공휴일은 매년 다르므로 holidays 라이브러리 권장
+        }
+        if (today.month, today.day) in major_holidays_2026:
+            return True
+    return False
+
+
 def main():
     """새 메시지 확인 → 명령어 처리 → 응답"""
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("텔레그램 설정 없음, 스킵")
+        return
+
+    # 공휴일/주말은 KIS API 호출 안 함
+    if is_korean_holiday():
+        print("📅 휴장일(공휴일/주말) - KIS API 호출 스킵")
         return
 
     kis = KISApi(KIS_APP_KEY, KIS_APP_SECRET, KIS_ACCOUNT_NO, is_mock=KIS_IS_MOCK)
