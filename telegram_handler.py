@@ -72,6 +72,7 @@ def handle_command(command: str, args: list, kis) -> str:
             "<b>[분석]</b>\n"
             "/volume — 거래량 TOP10\n"
             "/ai_stats — AI 성과\n"
+            "/golden — 5/20/60 정배열 종목\n"
         )
 
     elif command == "/report":
@@ -152,6 +153,14 @@ def handle_command(command: str, args: list, kis) -> str:
             f"├ 평균 손익률: <b>{s['avg_pnl']:+.2f}%</b>\n"
             f"└ 목표가 도달률: {s['target_hit_rate']}%"
         )
+
+    elif command == "/golden":
+        try:
+            from core.golden_cross import scan_triple_alignment, format_triple_alignment
+            result = scan_triple_alignment(kis, max_stocks=150)
+            return format_triple_alignment(result)
+        except Exception as e:
+            return f"❌ 정배열 스캔 실패: {e}"
 
     elif command == "/sync":
         try:
