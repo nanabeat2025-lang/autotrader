@@ -113,6 +113,51 @@ def detect_volume_spike(volumes: list[int], threshold: float = 1.5) -> dict:
     }
 
 
+def detect_rsi_uturn(closes: list[float]) -> dict:
+    """
+    RSI U턴 감지 (반등 포착)
+    - 어제 RSI가 과매도 구간(< 35)에 있었고
+    - 오늘 RSI가 어제보다 올라간 경우 → 반등 시작
+    """
+    if len(closes) < 16:
+        return {"is_uturn": False, "rsi_today": None, "rsi_yesterday": None}
+    rsi_today     = calc_rsi(closes)
+    rsi_yesterday = calc_rsi(closes[:-1])
+    is_uturn = (
+        rsi_today is not None and rsi_yesterday is not None
+        and rsi_yesterday < 35 and rsi_today > rsi_yesterday
+    )
+    return {
+        "is_uturn": is_uturn,
+        "rsi_today": rsi_today,
+        "rsi_yesterday": rsi_yesterday,
+    }
+
+
+def detect_bollinger_breakout(closes: list[float], period: int = 20) -> dict:
+    """
+    볼린저밴드 하단 이탈 후 복귀 감지 (반등 포착)
+    - 어제 종가가 하단 밴드 아래
+    - 오늘 종가가 하단 밴드 위로 복귀
+    """
+    if len(closes) < period + 1:
+        return {"is_breakout": False}
+    bb_today     = calc_bollinger(closes, period)
+    bb_yesterday = calc_bollinger(closes[:-1], period)
+    if bb_today.get("lower") is None or bb_yesterday.get("lower") is None:
+        return {"is_breakout": False}
+    is_breakout = (
+        closes[-2] < bb_yesterday["lower"]
+        and closes[-1] > bb_today["lower"]
+    )
+    return {
+        "is_breakout": is_breakout,
+        "lower_today": bb_today["lower"],
+        "close_today": closes[-1],
+        "close_yesterday": closes[-2],
+    }
+
+
 def calc_volatility(closes: list[float], period: int = 20) -> Optional[float]:
     """변동성 (연율화 %)"""
     if len(closes) < period + 1:
@@ -151,6 +196,8 @@ def build_indicators(ohlcv_list: list[dict]) -> dict:
         "bollinger": calc_bollinger(closes),
         "volume_spike": detect_volume_spike(vols),
         "volatility": calc_volatility(closes),
+        "rsi_uturn": detect_rsi_uturn(closes),
+        "bb_breakout": detect_bollinger_breakout(closes),
     }
 
 
