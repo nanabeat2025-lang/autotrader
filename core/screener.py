@@ -87,13 +87,16 @@ def build_universe(kis) -> dict:
 
 def _meets_buy_condition(indicators: dict, investor: dict = None, market: dict = None) -> tuple[bool, str]:
     """
-    매수 후보 조건 체크 (반등 포착 방식)
+    매수 후보 조건 체크 (반등 포착 + 단순 조건 OR)
     Returns: (조건충족여부, 충족된 조건 설명)
     """
+    rsi       = indicators.get("rsi") or 50
     macd      = indicators.get("macd", {}) or {}
+    bb        = indicators.get("bollinger", {}) or {}
     vol_spike = indicators.get("volume_spike", {}) or {}
     rsi_uturn = indicators.get("rsi_uturn", {}) or {}
     bb_break  = indicators.get("bb_breakout", {}) or {}
+    ohlcv     = indicators.get("recent_ohlcv", []) or []
     ma5       = indicators.get("ma5", 0) or 0
     ma20      = indicators.get("ma20", 0) or 0
     investor  = investor or {}
@@ -101,40 +104,48 @@ def _meets_buy_condition(indicators: dict, investor: dict = None, market: dict =
 
     reasons = []
 
-    # ── 시장 분위기 체크 (코스피 -1.5% 이상 하락 시 매수 신중) ──
+    # ── 시장 분위기 (코스피 -1.5% 이상 하락 시 매수 신중) ──
     kospi_rate = float(market.get("KOSPI", {}).get("change_rate", 0) or 0)
     if kospi_rate <= -1.5:
-        rsi_today = rsi_uturn.get("rsi_today", 50) or 50
-        if rsi_today < 30:
-            reasons.append(f"시장급락({kospi_rate:.1f}%)+극과매도({rsi_today})")
+        if rsi < 30:
+            reasons.append(f"시장급락({kospi_rate:.1f}%)+RSI극과매도({rsi})")
         return len(reasons) > 0, " | ".join(reasons)
 
-    # ── 1) RSI U턴 (과매도 → 반등 시작) ──────────────────────
+    # ── 강한 매수 신호 (반등 포착) ──────────────────────────
     if rsi_uturn.get("is_uturn"):
         rsi_t = rsi_uturn.get("rsi_today")
         rsi_y = rsi_uturn.get("rsi_yesterday")
-        reasons.append(f"RSI U턴 반등({rsi_y}→{rsi_t})")
+        reasons.append(f"⭐RSI U턴({rsi_y}→{rsi_t})")
 
-    # ── 2) 볼린저밴드 하단 이탈 후 복귀 ──────────────────────
     if bb_break.get("is_breakout"):
-        reasons.append(f"볼린저 하단 복귀(반등)")
+        reasons.append("⭐볼린저 하단복귀")
 
-    # ── 3) MACD 골든크로스 + 거래량 동반 ─────────────────────
+    if macd.get("cross") == "GOLDEN" and vol_spike.get("is_spike"):
+        reasons.append(f"⭐MACD골든+거래량{vol_spike.get('ratio', 0):.1f}배")
+
+    # ── 일반 매수 신호 (단순 조건) ───────────────────────────
+    if rsi < 40:
+        reasons.append(f"RSI 과매도({rsi})")
+
     if macd.get("cross") == "GOLDEN":
-        if vol_spike.get("is_spike"):
-            reasons.append(f"MACD골든+거래량{vol_spike.get('ratio', 0):.1f}배")
-        else:
-            reasons.append("MACD 골든크로스(거래량 약함)")
+        reasons.append("MACD 골든크로스")
 
-    # ── 4) 5일선이 20일선 위 (단기 상승 추세 보조) ───────────
+    bb_pos = bb.get("position")
+    if bb_pos is not None and bb_pos < 0.2:
+        reasons.append(f"볼린저 하단({bb_pos:.2f})")
+
     if ma5 > 0 and ma20 > 0 and ma5 > ma20:
         reasons.append("5일선>20일선")
 
-    # ── 5) 수급 (보조 지표) ──────────────────────────────────
+    if vol_spike.get("is_spike") and len(ohlcv) >= 2:
+        if ohlcv[-1]["close"] > ohlcv[-2]["close"]:
+            reasons.append(f"거래량 급증({vol_spike.get('ratio', 0):.1f}배)+양봉")
+
+    # ── 수급 ────────────────────────────────────────────────
     if investor.get("foreign_net_buy", 0) > 0:
-        reasons.append(f"외국인매수({investor['foreign_net_buy']:+,})")
+        reasons.append(f"외국인매수")
     if investor.get("institution_net_buy", 0) > 0:
-        reasons.append(f"기관매수({investor['institution_net_buy']:+,})")
+        reasons.append(f"기관매수")
 
     return len(reasons) > 0, " | ".join(reasons)
 
