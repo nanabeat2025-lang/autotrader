@@ -1,17 +1,22 @@
-name: 텔레그램 명령어 처리
+name: AI 자동매매 봇
 
 on:
+  # 매일 09:30 / 13:00 / 15:00 KST 실행
+  # KST = UTC + 9시간이므로 UTC 기준으로 설정
   schedule:
-    - cron: '*/5 * * * *'  # 5분마다 실행
+    - cron: '30 0 * * 1-5'   # 09:30 KST (월~금)
+    - cron: '0 4 * * 1-5'    # 13:00 KST (월~금)
+    - cron: '0 6 * * 1-5'    # 15:00 KST (월~금)
+
+  # 수동 실행도 가능 (GitHub에서 버튼 클릭)
   workflow_dispatch:
 
 jobs:
-  telegram:
+  trade:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    
     steps:
-      - name: Checkout
+      - name: 코드 체크아웃
         uses: actions/checkout@v4
 
       - name: Python 설치
@@ -20,9 +25,9 @@ jobs:
           python-version: '3.11'
 
       - name: 패키지 설치
-        run: pip install requests python-dotenv openai holidays
+        run: pip install -r requirements.txt
 
-      - name: .env 생성
+      - name: .env 파일 생성
         run: |
           cat << EOF > .env
           KIS_APP_KEY=${{ secrets.KIS_APP_KEY }}
@@ -34,17 +39,23 @@ jobs:
           TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
           MAX_BUDGET_PER_STOCK=100000
+          BUY_CONFIDENCE_MIN=55
+          SELL_CONFIDENCE_MIN=60
+          TAKE_PROFIT_RATE=0.02
+          STOP_LOSS_RATE=-0.10
+          COOLDOWN_DAYS=3
+          USE_VOLUME_TOP10=false
           EOF
 
-      - name: 명령어 처리
-        run: python telegram_handler.py
+      - name: 자동매매 실행
+        run: python main.py --now
 
-      - name: 데이터 저장
+      - name: 데이터 저장 (포지션, 매매 이력 커밋)
         if: always()
         run: |
           git config user.name "AutoTrader Bot"
           git config user.email "bot@autotrader.local"
           mkdir -p data
           git add data/ -f
-          git diff --staged --quiet || git commit -m "💬 텔레그램 명령어 처리"
+          git diff --staged --quiet || git commit -m "📊 매매 데이터 업데이트 $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M')"
           git push
