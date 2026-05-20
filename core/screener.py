@@ -29,55 +29,108 @@ def _is_etf(name: str) -> bool:
     return any(brand in name_upper for brand in etf_brands)
 
 
+# ── 폴백 주요 종목 리스트 (시가총액 API 실패 시 사용) ────
+MAJOR_STOCKS_FALLBACK = {
+    # KOSPI 대형주
+    "005930": "삼성전자", "000660": "SK하이닉스", "207940": "삼성바이오로직스",
+    "373220": "LG에너지솔루션", "005380": "현대차", "035420": "NAVER",
+    "000270": "기아", "006400": "삼성SDI", "035720": "카카오", "051910": "LG화학",
+    "068270": "셀트리온", "105560": "KB금융", "055550": "신한지주",
+    "012330": "현대모비스", "066570": "LG전자", "003670": "포스코퓨처엠",
+    "017670": "SK텔레콤", "030200": "KT", "034730": "SK", "003550": "LG",
+    "009150": "삼성전기", "033780": "KT&G", "086790": "하나금융지주",
+    "316140": "우리금융지주", "010130": "고려아연", "011200": "HMM",
+    "047810": "한국항공우주", "267260": "HD현대일렉트릭", "402340": "SK스퀘어",
+    "032830": "삼성생명", "323410": "카카오뱅크", "036570": "엔씨소프트",
+    "010950": "S-Oil", "024110": "기업은행", "138040": "메리츠금융지주",
+    "028260": "삼성물산", "015760": "한국전력", "316140": "우리금융지주",
+    "088350": "한화생명", "001450": "현대해상", "071050": "한국금융지주",
+    "139480": "이마트", "097950": "CJ제일제당", "078930": "GS",
+    "267250": "HD현대중공업", "010140": "삼성중공업", "042660": "한화오션",
+    "009540": "HD한국조선해양", "029780": "삼성카드", "086280": "현대글로비스",
+    "009830": "한화솔루션", "180640": "한진칼", "180640": "한진칼",
+    "000810": "삼성화재", "021240": "코웨이", "008770": "호텔신라",
+    "069960": "현대백화점", "000150": "두산", "005490": "POSCO홀딩스",
+    "001040": "CJ", "047040": "대우건설", "036460": "한국가스공사",
+    # KOSDAQ 대형주
+    "247540": "에코프로비엠", "086520": "에코프로", "091990": "셀트리온헬스케어",
+    "263750": "펄어비스", "293490": "카카오게임즈", "035900": "JYP Ent.",
+    "041510": "에스엠", "112040": "위메이드", "036570": "엔씨소프트",
+    "066970": "엘앤에프", "058470": "리노공업", "278280": "천보",
+    "121600": "나노신소재", "067160": "아프리카TV", "095340": "ISC",
+    "240810": "원익IPS", "036930": "주성엔지니어링", "108860": "셀바스AI",
+    "095700": "제넥신", "214150": "클래시스", "298540": "더네이쳐홀딩스",
+    "032500": "케이엠더블유", "039030": "이오테크닉스", "278280": "천보",
+    "067310": "하나마이크론", "131970": "테스나", "131290": "티에스이",
+    "036540": "SFA반도체", "041830": "위메이드플레이",
+    "182400": "에코프로에이치엔", "024720": "한국콜마", "143240": "사람인",
+}
+
+
 def build_universe(kis) -> dict:
     """
     동적 스캔 유니버스 구성 (ETF 제외 - 개별 종목만)
-    - KOSPI 시가총액 상위 100
-    - KOSDAQ 시가총액 상위 100
+    - 주요 종목 폴백 리스트 (~80개)
+    - KOSPI 시가총액 상위 100 (API 작동 시)
+    - KOSDAQ 시가총액 상위 100 (API 작동 시)
     - 거래량 상위 100
-    → 중복 제거 후 최대 300개
     """
     universe = {}
 
     print("🌐 전 종목 유니버스 구성 중 (ETF 제외)...")
 
+    # 0) 폴백 주요 종목 (시가총액 API 실패 대비)
+    for ticker, name in MAJOR_STOCKS_FALLBACK.items():
+        if not _is_etf(name):
+            universe[ticker] = {"name": name, "type": "STOCK"}
+    print(f"  주요 종목 폴백: {len(universe)}개")
+
     # 1) KOSPI 시가총액 상위 100
     try:
         kospi_top = kis.get_market_cap_top(market="J", n=100)
+        added = 0
         for item in kospi_top:
             ticker = item.get("mksc_shrn_iscd", "")
             name   = item.get("hts_kor_isnm", ticker)
             if ticker and len(ticker) == 6 and not _is_etf(name):
+                if ticker not in universe:
+                    added += 1
                 universe[ticker] = {"name": name, "type": "STOCK"}
-        print(f"  KOSPI 시가총액 상위: {len(kospi_top)}개 → 필터 후 {sum(1 for t in universe)}개")
+        if kospi_top:
+            print(f"  KOSPI 시가총액 상위: +{added}개")
     except Exception as e:
         print(f"  KOSPI 시가총액 조회 실패: {e}")
 
     # 2) KOSDAQ 시가총액 상위 100
     try:
         kosdaq_top = kis.get_market_cap_top(market="Q", n=100)
+        added = 0
         for item in kosdaq_top:
             ticker = item.get("mksc_shrn_iscd", "")
             name   = item.get("hts_kor_isnm", ticker)
             if ticker and len(ticker) == 6 and not _is_etf(name):
+                if ticker not in universe:
+                    added += 1
                 universe[ticker] = {"name": name, "type": "STOCK"}
-        print(f"  KOSDAQ 시가총액 상위: {len(kosdaq_top)}개")
+        if kosdaq_top:
+            print(f"  KOSDAQ 시가총액 상위: +{added}개")
     except Exception as e:
         print(f"  KOSDAQ 시가총액 조회 실패: {e}")
 
     # 3) 거래량 상위 100 (ETF 자동 제외)
     try:
         vol_top = kis.get_volume_top(n=100)
-        etf_skipped = 0
+        added = 0
         for item in vol_top:
             ticker = item.get("mksc_shrn_iscd", "")
             name   = item.get("hts_kor_isnm", ticker)
             if ticker and len(ticker) == 6:
                 if _is_etf(name):
-                    etf_skipped += 1
                     continue
+                if ticker not in universe:
+                    added += 1
                 universe[ticker] = {"name": name, "type": "STOCK"}
-        print(f"  거래량 상위: {len(vol_top)}개 (ETF {etf_skipped}개 제외)")
+        print(f"  거래량 상위: +{added}개")
     except Exception as e:
         print(f"  거래량 상위 조회 실패: {e}")
 
