@@ -72,7 +72,8 @@ def handle_command(command: str, args: list, kis) -> str:
             "<b>[분석]</b>\n"
             "/volume — 거래량 TOP10\n"
             "/ai_stats — AI 성과\n"
-            "/golden — 5/20/60 정배열 종목\n"
+            "/golden — 5/20 골든크로스 종목\n"
+            "/align — 5/20/60 정배열 종목\n"
         )
 
     elif command == "/report":
@@ -155,6 +156,21 @@ def handle_command(command: str, args: list, kis) -> str:
         )
 
     elif command == "/golden":
+        try:
+            from core.golden_cross import scan_golden_cross, format_scan_result
+            from core.screener import build_universe
+            # 동적 유니버스를 골든크로스 스캐너 형식으로 변환
+            universe_dict = {t: info["name"] for t, info in build_universe(kis).items()}
+            result = scan_golden_cross(
+                kis, tickers=universe_dict,
+                short_period=5, long_period=20,
+                include_near=True,
+            )
+            return format_scan_result(result)
+        except Exception as e:
+            return f"❌ 골든크로스 스캔 실패: {e}"
+
+    elif command == "/align":
         try:
             from core.golden_cross import scan_triple_alignment, format_triple_alignment
             result = scan_triple_alignment(kis, max_stocks=150)
