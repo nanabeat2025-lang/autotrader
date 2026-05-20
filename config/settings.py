@@ -40,7 +40,7 @@ USE_VOLUME_TOP10 = False
 
 # ── 매매 기준 ─────────────────────────────────────────────
 MAX_BUDGET_PER_STOCK = int(os.getenv("MAX_BUDGET_PER_STOCK", "100000"))   # 10만원
-BUY_CONFIDENCE_MIN   = int(os.getenv("BUY_CONFIDENCE_MIN",  "55"))
+BUY_CONFIDENCE_MIN   = int(os.getenv("BUY_CONFIDENCE_MIN",  "50"))
 SELL_CONFIDENCE_MIN  = int(os.getenv("SELL_CONFIDENCE_MIN", "60"))
 TAKE_PROFIT_RATE     = float(os.getenv("TAKE_PROFIT_RATE",  "0.015"))    # +1.5% 익절
 STOP_LOSS_RATE       = float(os.getenv("STOP_LOSS_RATE",   "-0.10"))     # -10% 손절
@@ -60,7 +60,7 @@ STOCK_SECTORS = {
 }
 
 # ── 쿨다운 (재매수 금지 기간) ────────────────────────────
-COOLDOWN_DAYS = int(os.getenv("COOLDOWN_DAYS", "3"))
+COOLDOWN_DAYS = int(os.getenv("COOLDOWN_DAYS", "1"))
 
 # ── 스케줄 (하루 3회) ─────────────────────────────────────
 SCHEDULE_TIMES = ["09:30", "13:00", "15:00"]
