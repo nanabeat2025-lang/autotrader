@@ -221,31 +221,31 @@ def is_korean_holiday() -> bool:
     """한국 공휴일 + 주말 확인"""
     from datetime import date
     today = date.today()
-    # 주말
     if today.weekday() >= 5:
         return True
-    # 한국 공휴일
     try:
         import holidays
         kr_holidays = holidays.SouthKorea()
         if today in kr_holidays:
             return True
     except ImportError:
-        # holidays 라이브러리 없으면 주요 공휴일 하드코딩 체크
-        major_holidays_2026 = {
-            (1, 1),    # 신정
-            (3, 1),    # 삼일절
-            (5, 5),    # 어린이날
-            (6, 6),    # 현충일
-            (8, 15),   # 광복절
-            (10, 3),   # 개천절
-            (10, 9),   # 한글날
-            (12, 25),  # 크리스마스
-            # 음력 공휴일은 매년 다르므로 holidays 라이브러리 권장
+        major_holidays = {
+            (1, 1), (3, 1), (5, 5), (6, 6),
+            (8, 15), (10, 3), (10, 9), (12, 25),
         }
-        if (today.month, today.day) in major_holidays_2026:
+        if (today.month, today.day) in major_holidays:
             return True
     return False
+
+
+def is_market_hours() -> bool:
+    """한국 주식시장 운영시간 확인 (평일 09:00 ~ 16:00 KST)"""
+    from datetime import datetime, timezone, timedelta
+    kst = timezone(timedelta(hours=9))
+    now = datetime.now(kst)
+    hour = now.hour
+    # 09:00 ~ 15:59 KST 사이만 시장 시간으로 인정
+    return 9 <= hour < 16
 
 
 def main():
@@ -257,6 +257,11 @@ def main():
     # 공휴일/주말은 KIS API 호출 안 함
     if is_korean_holiday():
         print("📅 휴장일(공휴일/주말) - KIS API 호출 스킵")
+        return
+
+    # 장 시간 외에는 KIS API 호출 안 함
+    if not is_market_hours():
+        print("⏰ 장 외 시간 - KIS API 호출 스킵")
         return
 
     kis = KISApi(KIS_APP_KEY, KIS_APP_SECRET, KIS_ACCOUNT_NO, is_mock=KIS_IS_MOCK)
