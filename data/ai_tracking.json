@@ -49,5 +49,22 @@
     "actual_pnl_rate": null,
     "target_reached": null,
     "result": "OPEN"
+  },
+  {
+    "id": "108860_20260520033253",
+    "ticker": "108860",
+    "name": "셀바스AI",
+    "buy_date": "2026-05-20 03:32:53",
+    "buy_price": 10180.0,
+    "ai_signal": "BUY",
+    "ai_confidence": 65,
+    "ai_target": 11500,
+    "ai_stop_loss": 9800,
+    "ai_reason": "RSI가 30 이하로 강한 매수 신호를 나타내고 있으며, 볼린저밴드 하단에 위치해 반등 가능성이 있습니다. 외국인은 순매수를 지속하고 있지만 기관은 매도세를 보이고 있어 리스크를 감안해야 합니다.",
+    "sell_date": null,
+    "sell_price": null,
+    "actual_pnl_rate": null,
+    "target_reached": null,
+    "result": "OPEN"
   }
 ]

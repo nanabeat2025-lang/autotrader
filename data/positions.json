@@ -16,5 +16,23 @@
     "buy_count": 1,
     "highest_price": 6960.0,
     "trailing_stop": 6612.0
+  },
+  "108860": {
+    "name": "셀바스AI",
+    "qty": 2,
+    "buy_price": 10180.0,
+    "target_price": 11500.0,
+    "bought_at": "2026-05-20 03:32:53",
+    "ai_prediction": {
+      "signal": "BUY",
+      "confidence": 65,
+      "target_price": 11500,
+      "stop_loss": 9800,
+      "reason": "RSI가 30 이하로 강한 매수 신호를 나타내고 있으며, 볼린저밴드 하단에 위치해 반등 가능성이 있습니다. 외국인은 순매수를 지속하고 있지만 기관은 매도세를 보이고 있어 리스크를 감안해야 합니다."
+    },
+    "total_planned_qty": 2,
+    "buy_count": 1,
+    "highest_price": 10180.0,
+    "trailing_stop": 9671.0
   }
 }
