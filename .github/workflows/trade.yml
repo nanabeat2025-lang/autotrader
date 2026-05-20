@@ -39,11 +39,11 @@ jobs:
           TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
           MAX_BUDGET_PER_STOCK=100000
-          BUY_CONFIDENCE_MIN=55
+          BUY_CONFIDENCE_MIN=50
           SELL_CONFIDENCE_MIN=60
           TAKE_PROFIT_RATE=0.02
           STOP_LOSS_RATE=-0.10
-          COOLDOWN_DAYS=3
+          COOLDOWN_DAYS=1
           USE_VOLUME_TOP10=false
           EOF
 
