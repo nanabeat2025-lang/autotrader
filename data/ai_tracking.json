@@ -32,5 +32,22 @@
     "actual_pnl_rate": null,
     "target_reached": null,
     "result": "OPEN"
+  },
+  {
+    "id": "298540_20260520013338",
+    "ticker": "298540",
+    "name": "더네이쳐홀딩스",
+    "buy_date": "2026-05-20 01:33:38",
+    "buy_price": 6960.0,
+    "ai_signal": "BUY",
+    "ai_confidence": 70,
+    "ai_target": 7500,
+    "ai_stop_loss": 6700,
+    "ai_reason": "RSI가 30 이하로 과매도 상태이며, 외국인과 기관의 동반 순매수가 지속되고 있어 매수 신호가 발생했습니다. 볼린저밴드 하단 근처에서 반등 가능성이 높습니다.",
+    "sell_date": null,
+    "sell_price": null,
+    "actual_pnl_rate": null,
+    "target_reached": null,
+    "result": "OPEN"
   }
 ]

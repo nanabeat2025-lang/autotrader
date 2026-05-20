@@ -1,1 +1,20 @@
-{}
+{
+  "298540": {
+    "name": "더네이쳐홀딩스",
+    "qty": 4,
+    "buy_price": 6960.0,
+    "target_price": 7500.0,
+    "bought_at": "2026-05-20 01:33:37",
+    "ai_prediction": {
+      "signal": "BUY",
+      "confidence": 70,
+      "target_price": 7500,
+      "stop_loss": 6700,
+      "reason": "RSI가 30 이하로 과매도 상태이며, 외국인과 기관의 동반 순매수가 지속되고 있어 매수 신호가 발생했습니다. 볼린저밴드 하단 근처에서 반등 가능성이 높습니다."
+    },
+    "total_planned_qty": 4,
+    "buy_count": 1,
+    "highest_price": 6960.0,
+    "trailing_stop": 6612.0
+  }
+}
