@@ -98,8 +98,8 @@ def calc_bollinger(closes: list[float], period: int = 20, num_std: float = 2.0) 
     }
 
 
-def detect_volume_spike(volumes: list[int], threshold: float = 1.5) -> dict:
-    """거래량 급증 감지 (20일 평균 대비 1.5배 이상)"""
+def detect_volume_spike(volumes: list[int], threshold: float = 1.3) -> dict:
+    """거래량 급증 감지 (20일 평균 대비 1.3배 이상)"""
     if len(volumes) < 21:
         return {"is_spike": False, "ratio": 0, "today_vol": 0, "avg_vol": 0}
     avg_20 = sum(volumes[-21:-1]) / 20

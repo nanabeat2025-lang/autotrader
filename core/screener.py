@@ -177,15 +177,15 @@ def _meets_buy_condition(indicators: dict, investor: dict = None, market: dict =
         reasons.append(f"⭐MACD골든+거래량{vol_spike.get('ratio', 0):.1f}배")
 
     # ── 일반 매수 신호 (단순 조건) ───────────────────────────
-    if rsi < 40:
-        reasons.append(f"RSI 과매도({rsi})")
+    if rsi < 50:
+        reasons.append(f"RSI 중립이하({rsi})")
 
     if macd.get("cross") == "GOLDEN":
         reasons.append("MACD 골든크로스")
 
     bb_pos = bb.get("position")
-    if bb_pos is not None and bb_pos < 0.2:
-        reasons.append(f"볼린저 하단({bb_pos:.2f})")
+    if bb_pos is not None and bb_pos < 0.3:
+        reasons.append(f"볼린저 하단권({bb_pos:.2f})")
 
     if ma5 > 0 and ma20 > 0 and ma5 > ma20:
         reasons.append("5일선>20일선")
