@@ -37,10 +37,23 @@ from bot.telegram_bot import (
 # ─────────────────────────────────────────────────────────
 # 분석 사이클
 # ─────────────────────────────────────────────────────────
+def is_market_hours() -> bool:
+    """한국 주식시장 운영시간 확인 (평일 09:00 ~ 16:00 KST)"""
+    from datetime import timezone, timedelta
+    kst = timezone(timedelta(hours=9))
+    now = datetime.now(kst)
+    return 9 <= now.hour < 16
+
+
 def run_cycle(kis: KISApi, dry_run: bool = False):
     print(f"\n{'='*60}")
     print(f"🤖 분석 사이클 시작: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*60}")
+
+    # ── 장 시간 체크 (09:00 ~ 16:00 KST) ─────────────────
+    if not is_market_hours():
+        print("⏰ 장 외 시간 → 매매 스킵")
+        return
 
     # ── 휴장일 체크 ─────────────────────────────────────
     if kis.is_holiday_today():
