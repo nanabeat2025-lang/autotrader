@@ -34,5 +34,12 @@
     "buy_count": 1,
     "highest_price": 10960.0,
     "trailing_stop": 10412.0
+  },
+  "065170": {
+    "name": "065170",
+    "qty": 3,
+    "buy_price": 2530.0,
+    "target_price": 0,
+    "bought_at": "2026-05-22 01:17:51"
   }
 }
