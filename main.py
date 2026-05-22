@@ -213,31 +213,62 @@ def main():
         run_cycle(kis, dry_run=args.dry)
         return
 
-    # 텔레그램 봇을 백그라운드 스레드에서 실행
+    # 텔레그램 봇 + 스케줄러를 하나의 asyncio 이벤트 루프에서 통합 실행
     if bot_app:
-        def run_bot():
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            bot_app.run_polling()
+        import asyncio
 
-        bot_thread = threading.Thread(target=run_bot, daemon=True)
-        bot_thread.start()
-        print("📱 텔레그램 봇 백그라운드 실행 중...")
+        async def scheduler_loop():
+            """매매 사이클을 비동기 스케줄러로 실행"""
+            while True:
+                schedule.run_pending()
+                await asyncio.sleep(30)
 
-    # 스케줄 등록
-    def job():
-        run_cycle(kis, dry_run=False)
+        async def async_main():
+            # 스케줄 등록
+            def job():
+                run_cycle(kis, dry_run=False)
+            for t in SCHEDULE_TIMES:
+                schedule.every().day.at(t).do(job)
 
-    for t in SCHEDULE_TIMES:
-        schedule.every().day.at(t).do(job)
+            print(f"⏰ 스케줄 등록: {' / '.join(SCHEDULE_TIMES)}")
+            print("📱 텔레그램 봇 시작 중...")
+            print("   (Ctrl+C 로 종료)\n")
 
-    print(f"⏰ 스케줄 등록: {' / '.join(SCHEDULE_TIMES)}")
-    print("   (Ctrl+C 로 종료)\n")
+            # 텔레그램 봇 초기화
+            await bot_app.initialize()
+            await bot_app.start()
+            await bot_app.updater.start_polling()
 
-    while True:
-        schedule.run_pending()
-        time.sleep(30)
+            # 스케줄러를 백그라운드 태스크로 실행
+            asyncio.create_task(scheduler_loop())
+
+            # 영구 대기 (Ctrl+C 까지)
+            try:
+                await asyncio.Event().wait()
+            except (KeyboardInterrupt, asyncio.CancelledError):
+                pass
+            finally:
+                await bot_app.updater.stop()
+                await bot_app.stop()
+                await bot_app.shutdown()
+
+        try:
+            asyncio.run(async_main())
+        except KeyboardInterrupt:
+            print("\n👋 종료합니다")
+    else:
+        # 텔레그램 봇 없으면 스케줄러만 실행 (기존 방식)
+        def job():
+            run_cycle(kis, dry_run=False)
+        for t in SCHEDULE_TIMES:
+            schedule.every().day.at(t).do(job)
+
+        print(f"⏰ 스케줄 등록: {' / '.join(SCHEDULE_TIMES)}")
+        print("   (Ctrl+C 로 종료)\n")
+
+        while True:
+            schedule.run_pending()
+            time.sleep(30)
 
 
 if __name__ == "__main__":
