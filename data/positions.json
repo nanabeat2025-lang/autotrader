@@ -14,8 +14,8 @@
     },
     "total_planned_qty": 4,
     "buy_count": 1,
-    "highest_price": 7200.0,
-    "trailing_stop": 6840.0
+    "highest_price": 7240.0,
+    "trailing_stop": 6878.0
   },
   "108860": {
     "name": "셀바스AI",
@@ -32,7 +32,7 @@
     },
     "total_planned_qty": 2,
     "buy_count": 1,
-    "highest_price": 10730.0,
-    "trailing_stop": 10193.5
+    "highest_price": 10960.0,
+    "trailing_stop": 10412.0
   }
 }
